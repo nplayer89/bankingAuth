@@ -11,6 +11,7 @@ import (
 	"bankingAuth/logger"
 	"bankingAuth/service"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
