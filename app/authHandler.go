@@ -28,6 +28,22 @@ func (h AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+
+	var refreshRequest dto.RefreshTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&refreshRequest); err != nil {
+		logger.Error("Error while decoding refresh token request: " + err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		token, appErr := h.service.Refresh(refreshRequest)
+		if appErr != nil {
+			writeResponseJson(w, appErr.Code, appErr.AsMessage)
+		} else {
+			writeResponseJson(w, http.StatusOK, *token)
+		}
+	}
+}
+
 func writeResponseJson(w http.ResponseWriter, code int, data interface{}) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)

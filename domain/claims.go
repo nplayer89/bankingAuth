@@ -39,3 +39,15 @@ func (c AccessTokenClaims) RefreshTokenClaims() RefreshTokenClaims {
 		},
 	}
 }
+
+func (c RefreshTokenClaims) AccessTokenClaims() AccessTokenClaims {
+	return AccessTokenClaims{
+		CustomerId: c.CustomerId,
+		Accounts: c.Accounts,
+		Username: c.Username,
+		Role: c.Role,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(ACCESS_TOKEN_DURATION).Unix(),
+		},
+	}
+}
