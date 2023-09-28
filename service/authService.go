@@ -4,6 +4,8 @@ import (
 	"bankingAuth/domain"
 	"bankingAuth/dto"
 	"bankingAuth/errs"
+	"bankingAuth/logger"
+	"fmt"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -11,6 +13,7 @@ import (
 type AuthService interface {
 	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError)
 	Refresh(request dto.RefreshTokenRequest) (*dto.LoginResponse, *errs.AppError)
+	Verify(urlParams map[string]string) *errs.AppError
 }
 
 type DefaultAuthService struct {
@@ -58,6 +61,39 @@ func (s DefaultAuthService) Refresh(request dto.RefreshTokenRequest) (*dto.Login
 		return nil, errs.NewAuthenticationError("invalid token")
 	}
 	return nil, errs.NewAuthenticationError("cannot generate a new access token until the curent one expires")
+}
+
+func (s DefaultAuthService) Verify(urlParams map[string]string) *errs.AppError {
+	if jwtToken, err := jwtTokenFromString(urlParams["token"]); err != nil {
+		return errs.NewAuthorizationError(err.Error())
+	} else {
+		if jwtToken.Valid {
+			claims := jwtToken.Claims.(*domain.AccessTokenClaims)
+			if claims.IsUserRole() {
+				if !claims.IsRequestVerifiedWithTokenClaims(urlParams) {
+					return errs.NewAuthenticationError("request not verified with the token claims")
+				}
+			}
+			isAuthorized := s.RolePermissions.IsAuthorizedFor(claims.Role, urlParams["routeName"])
+			if !isAuthorized {
+				return errs.NewAuthorizationError(fmt.Sprintf("%s role is not authorized", claims.Role))
+			}
+			return nil
+		} else {
+			return errs.NewAuthorizationError("Invalid token")
+		}
+	}
+}
+
+func jwtTokenFromString(tokenString string) (*jwt.Token, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &domain.AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(domain.HMAC_SAMPLE_SECRET), nil
+	})
+	if err != nil {
+		logger.Error("Error while parsing token: " + err.Error())
+		return nil, err
+	}
+	return token, nil
 }
 
 func NewLoginService(repo domain.AuthRepository, permissions domain.RolePermissions) DefaultAuthService {

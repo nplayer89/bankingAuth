@@ -52,6 +52,35 @@ func writeResponseJson(w http.ResponseWriter, code int, data interface{}) {
 	}
 }
 
+func (h AuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
+	urlParams := make(map[string]string)
+
+	for k := range r.URL.Query() {
+		urlParams[k] = r.URL.Query().Get(k)
+	}
+
+	if urlParams["token"] != "" {
+		appErr := h.service.Verify(urlParams)
+		if appErr != nil {
+			writeResponseJson(w, appErr.Code, notAuthorizedResponse(appErr.Message))
+		} else {
+			writeResponseJson(w, http.StatusOK, authorizedResponse())
+		}
+	} else {
+		writeResponseJson(w, http.StatusForbidden, notAuthorizedResponse("missing token"))
+	}
+}
+
+func notAuthorizedResponse(msg string) map[string]interface{} {
+	return map[string]interface{}{
+		"isAuthorized": false,
+		"message":      msg,
+	}
+}
+
+func authorizedResponse() map[string]bool {
+	return map[string]bool{"isAuthorized": true}
+}
 func (h AuthHandler) NotImplementedHandler(w http.ResponseWriter, r *http.Request) {
 	writeResponseJson(w, http.StatusOK, "Handler not implemented...")
 }
