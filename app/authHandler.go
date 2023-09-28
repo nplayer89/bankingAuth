@@ -35,3 +35,7 @@ func writeResponseJson(w http.ResponseWriter, code int, data interface{}) {
 		panic(err)
 	}
 }
+
+func (h AuthHandler) NotImplementedHandler(w http.ResponseWriter, r *http.Request) {
+	writeResponseJson(w, http.StatusOK, "Handler not implemented...")
+}

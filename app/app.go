@@ -28,6 +28,9 @@ func Start() {
 	ah := AuthHandler{service.NewLoginService(authRepository, domain.GetRolePermissions())}
 
 	router.HandleFunc("/auth/login", ah.Login).Methods(http.MethodPost)
+	router.HandleFunc("/auth/register", ah.NotImplementedHandler).Methods(http.MethodPost)
+	router.HandleFunc("/auth/refresh", ah.NotImplementedHandler).Methods(http.MethodPost)
+	router.HandleFunc("/auth/verify", ah.NotImplementedHandler).Methods(http.MethodPost)
 
 }
 
