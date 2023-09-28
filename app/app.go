@@ -32,6 +32,10 @@ func Start() {
 	router.HandleFunc("/auth/refresh", ah.Refresh).Methods(http.MethodPost)
 	router.HandleFunc("/auth/verify", ah.Verify).Methods(http.MethodPost)
 
+	address := os.Getenv("SERVER_ADDRESS")
+	port := os.Getenv("SERVER_PORT")
+	logger.Info(fmt.Sprintf("Starting OAuth server on %s:%s...", address, port))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", address, port), router))
 }
 
 func getDbClient() *sqlx.DB {
